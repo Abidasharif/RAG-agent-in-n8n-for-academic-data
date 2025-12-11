@@ -1,11 +1,418 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My RAG Agent Project</title>
-</head>
-<body>
-    <h1>Hello World! This is my GitHub Pages site.</h1>
-    <p>The index.html file is now correctly deployed.</p>
-</body>
-</html>
+{
+  "name": "RAG Agent for Matric Exam Past Papers Analysis",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1b4501ed-2f2f-4c72-9b07-1bfb8bfa8830",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-3",
+              "name": "chunkSize",
+              "value": 1000,
+              "type": "number"
+            },
+            {
+              "id": "id-4",
+              "name": "chunkOverlap",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "id-5",
+              "name": "googleDriveFolderId",
+              "value": "<__PLACEHOLDER_VALUE__Google Drive Folder ID containing PDFs__>",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "supabaseTableName",
+              "value": "matric_papers",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "fd1299ce-845e-4911-aae6-2f95f73c5222",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -864,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $('Workflow Configuration').first().json.chunkSize }}",
+        "chunkOverlap": "={{ $('Workflow Configuration').first().json.chunkOverlap }}",
+        "options": {}
+      },
+      "id": "877b0586-be73-4317-ae99-746da5b02b8e",
+      "name": "Recursive Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "c42060aa-90a1-4dce-9b59-d3a09a5c8e93",
+      "name": "Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi! I can help you identify the most repetitive and frequently asked questions from Punjab Matric exam past papers. What subject or topic would you like to explore?",
+        "options": {
+          "loadPreviousSession": "memory"
+        }
+      },
+      "id": "6ed1cf93-85bd-4790-8d5d-2f1ae3a865c7",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1360,
+        528
+      ],
+      "webhookId": "767d1b32-7215-4e2b-a596-eb6bba087636"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "7619ca7e-3a28-4aed-af82-e7ba1ac10f36",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1296,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an expert academic assistant for Matric students preparing for Punjab board exams.\n\nYour primary task is to help students identify the most repetitive and frequently asked questions from past papers. When a student asks about a subject or topic:\n\n1. Use the past_papers_search tool to retrieve relevant questions from the indexed past papers\n2. Analyze the retrieved content to identify patterns and repetitive questions\n3. Present the most frequently asked questions clearly and concisely\n4. Group similar questions together when appropriate\n5. Provide context about which years or papers these questions appeared in if available\n\nAlways be helpful, encouraging, and focused on helping students prepare effectively for their exams."
+        }
+      },
+      "id": "94e51ec2-e04e-477b-8807-147c71f19c0d",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14iO19Qx4TGVPm1P1Bz1b8jFI_EhrjI_Y",
+          "mode": "list",
+          "cachedResultName": "Past Papers",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14iO19Qx4TGVPm1P1Bz1b8jFI_EhrjI_Y"
+        },
+        "options": {}
+      },
+      "id": "0fa604fd-1e98-4ce5-a413-a3727ace4f9a",
+      "name": "Get PDFs from Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -512,
+        224
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ER6R4i0m6cD47KCK",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "embeddingBatchSize": 1536,
+        "options": {}
+      },
+      "id": "7b938796-1a05-44e6-8487-02e7566269ca",
+      "name": "Supabase Vector Store - Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "nMdvFz6FZfu5LlHX",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search through Punjab Matric exam past papers to find repetitive and frequently asked questions. Use this tool to retrieve relevant questions from the indexed documents.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 1000,
+        "options": {}
+      },
+      "id": "a562ca45-085a-4cf9-8b40-d8a138a4a131",
+      "name": "Supabase Vector Store - Retrieve Tool",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -1008,
+        752
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "nMdvFz6FZfu5LlHX",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        0,
+        464
+      ],
+      "id": "ccd00902-591d-4377-a471-9043d83d0368",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QC3vIXEt9MDKwkRA",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        800
+      ],
+      "id": "3224600f-2ee0-405e-b9d5-111c4b42c532",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QC3vIXEt9MDKwkRA",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        960
+      ],
+      "id": "663ed62c-6edd-45db-bfec-45b49af86626",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QC3vIXEt9MDKwkRA",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Get PDFs from Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Document Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store - Insert",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PDFs from Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store - Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store - Retrieve Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store - Insert",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store - Retrieve Tool",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a0805e06-20c7-4255-81a1-f28f4b19c4e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b4f6ad7a98b19ec05b674cd907d3481d06c5e77c6d7df6a193309d5c19a702b4"
+  },
+  "id": "JbMuvwIJDphcr5NR",
+  "tags": []
+}
